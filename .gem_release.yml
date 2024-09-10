@@ -1,0 +1,3 @@
+bump:
+  file: "lib/spree_stripe_express_checkout/version.rb"
+
