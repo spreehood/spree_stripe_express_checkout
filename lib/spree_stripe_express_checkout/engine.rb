@@ -1,6 +1,7 @@
 module SpreeStripeExpressCheckout
   class Engine < Rails::Engine
     require 'spree/core'
+    require 'spree_gateway'
     isolate_namespace Spree
     engine_name 'spree_stripe_express_checkout'
 
@@ -11,6 +12,11 @@ module SpreeStripeExpressCheckout
 
     initializer 'spree_stripe_express_checkout.environment', before: :load_config_initializers do |_app|
       SpreeStripeExpressCheckout::Config = SpreeStripeExpressCheckout::Configuration.new
+    end
+
+    config.after_initialize do |app|
+      require_dependency 'spree/gateway/stripe_express_checkout'
+      app.config.spree.payment_methods << Spree::Gateway::StripeExpressCheckout
     end
 
     def self.activate
