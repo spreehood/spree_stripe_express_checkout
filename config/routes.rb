@@ -4,6 +4,7 @@ Spree::Core::Engine.add_routes do
     namespace :v2 do
       namespace :storefront do
         resources :stripe_payment, only: :create
+        resources :express_checkout, only: :create
       end
     end
   end
