@@ -55,16 +55,16 @@ module Spree
           private
 
           def attach_address
-            vendor_sl = @order.line_items.first.vendor.stock_locations.first
+            default_address = Spree::Address.find_by(label: 'default')
 
-            sl_address = Spree::Address.find_by(label: vendor_sl.name)
-
-            if sl_address.present?
-              @order.update(billing_address: sl_address)
+            if default_address.present?
+              @order.update(billing_address: default_address)
             else
-              address = Spree::Address.create!(first_name: 'Anonymous', last_name: 'User', address1: vendor_sl.address1,
-                                              city: vendor_sl.city, zipcode: vendor_sl.zipcode, phone: '1234567890',
-                                              state: vendor_sl.state, label: vendor_sl.name, country: vendor_sl.country)
+              country = Spree::Country.find_by(iso: 'US')
+              state = country.states.first
+              address = Spree::Address.create!(first_name: 'Anonymous', last_name: 'User', address1: 'Kathmandu',
+                                                            city: 'Kathmandu', zipcode: '12345', phone: '1234567890',
+                                                            state: , label: 'default', country: )
               @order.update(billing_address: address)
             end
 
