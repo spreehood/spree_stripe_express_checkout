@@ -39,7 +39,7 @@ module Spree
                   payment.process!
                 end
 
-                @order.update!(email: 'no_email@email.com', state: 'complete')
+                @order.update!(email: 'no_email@email.com', state: 'complete', completed_at: Time.zone.now)
 
                 render json: { message: 'Order and Payment created successfully' }, status: :ok
               else
