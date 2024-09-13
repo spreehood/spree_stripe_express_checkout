@@ -39,7 +39,7 @@ module Spree
                   payment.process!
                 end
 
-                @order.next
+                @order.update!(email: 'no_email@email.com', state: 'complete')
 
                 render json: { message: 'Order and Payment created successfully' }, status: :ok
               else
@@ -68,7 +68,7 @@ module Spree
               @order.update(billing_address: address)
             end
 
-            @order.update(use_billing: true)
+            @order.update!(use_billing: true)
             @order.next
           end
 
