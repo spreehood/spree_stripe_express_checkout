@@ -5,7 +5,7 @@ module Spree
     module V2
       module Storefront
         class ExpressCheckoutController < ::Spree::Api::V2::BaseController
-          # before_action :require_spree_current_user
+          before_action :payment_intent_details, only: :create
 
           def create
             @order = if params[:order_id].present?
@@ -39,7 +39,10 @@ module Spree
                   payment.process!
                 end
 
-                @order.update!(email: 'no_email@email.com', state: 'complete', completed_at: Time.zone.now)
+                @order.update!(email: @customer_email || 'no_email@email.com', state: 'complete', completed_at: Time.zone.now)
+
+                order_updater = Spree::OrderUpdater.new(@order)
+                order_updater.update
 
                 render json: { message: 'Order and Payment created successfully' }, status: :ok
               else
@@ -55,17 +58,21 @@ module Spree
           private
 
           def attach_address
-            default_address = Spree::Address.find_by(label: 'default')
-
-            if default_address.present?
-              @order.update(billing_address: default_address)
+            if @billing_address.present?
+              @order.update(billing_address: @billing_address)
             else
-              country = Spree::Country.find_by(iso: 'US')
-              state = country.states.first
-              address = Spree::Address.create!(first_name: 'Anonymous', last_name: 'User', address1: 'Kathmandu',
-                                                            city: 'Kathmandu', zipcode: '12345', phone: '1234567890',
-                                                            state: , label: 'default', country: )
-              @order.update(billing_address: address)
+              default_address = Spree::Address.find_by(label: 'default')
+              
+              if default_address.present?
+                @order.update(billing_address: default_address)
+              else
+                country = Spree::Country.find_by(iso: 'US')
+                state = country.states.first
+                address = Spree::Address.create!(first_name: 'Anonymous', last_name: 'User', address1: 'Kathmandu',
+                                                              city: 'Kathmandu', zipcode: '12345', phone: '1234567890',
+                                                              state: , label: 'default', country: )
+                @order.update(billing_address: address)
+              end
             end
 
             @order.update!(use_billing: true)
@@ -91,6 +98,34 @@ module Spree
               payment_intent_secret: params[:payment_intent_secret],
               payment_method_id: payment_method.id
             )
+          end
+
+          def payment_intent_details
+            payment_intent = Stripe::PaymentIntent.retrieve(
+              params[:payment_intent_id],
+              { api_key: Spree::Gateway::StripeExpressCheckout.first.preferred_api_secret_key }
+            )
+
+            payment_method = Stripe::PaymentMethod.retrieve(
+              payment_intent.payment_method,
+              { api_key: Spree::Gateway::StripeExpressCheckout.first.preferred_api_secret_key }
+            )
+
+            billing_details = payment_method.billing_details
+
+            # build address from the stripe's billing details
+            first_name = billing_details.name.split(' ').first
+            last_name = billing_details.name.split(' ').last
+            address1 =  billing_details.address.line1
+            address2 = billing_details.address.line2
+            city = billing_details.address.city
+            zipcode = billing_details.address.postal_code
+            phone = billing_details.phone || '1234567890'
+            country = Spree::Country.find_by(iso: billing_details.address.country)
+            state = country.states.find_by(abbr: billing_details.address.state)
+
+            @billing_address = Spree::Address.create!(first_name:, last_name:, address1:, address2:, city:, zipcode:, phone:, state:, country:)
+            @customer_email = billing_details.email
           end
         end
       end
