@@ -22,7 +22,8 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'spree', '>= 4.5.0'
   s.add_dependency 'spree_extension'
-  s.add_dependency 'spree_gateway'
+  s.add_dependency 'spree_gateway', '~> 3.11.0'
+  s.add_dependency 'stripe', '~> 12.6.0'
 
   s.add_development_dependency 'spree_dev_tools'
 end

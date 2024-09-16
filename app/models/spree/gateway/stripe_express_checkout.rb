@@ -2,6 +2,7 @@ require 'spree_gateway'
 
 module Spree
   class Gateway::StripeExpressCheckout < Gateway
+    preference :api_secret_key, :string
 
     def auto_capture?
       true
